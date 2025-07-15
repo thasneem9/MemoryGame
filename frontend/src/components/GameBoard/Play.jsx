@@ -1,4 +1,6 @@
 import { useLocation } from 'react-router-dom';
+import MemoryBoard from './MemoryBoard'; // 📌 make sure this component exists
+import './play.css'; // 📌 create this
 
 export default function Play() {
   const { state } = useLocation();
@@ -6,27 +8,27 @@ export default function Play() {
 
   return (
     <div className="play-screen">
-      <div className="player">
-      <img  className='avatar'src={user.avatar} alt={user.name} width={60} style={{ borderRadius: '50%' }} />
+      <div className="top-bar">
+        <div className="player player-left">
+          <img className="avatar" src={user.avatar} alt={user.name} />
+          <p>{user.name}</p>
+        </div>
 
-        <p>{user?.name}</p>
+        <h1 className="arena-title">🧠 Memory Game Arena</h1>
+
+        <div className="player player-right">
+          {opponent ? (
+            <>
+              <img className="avatar" src={opponent.avatar} alt={opponent.name} />
+              <p>{opponent.name}</p>
+            </>
+          ) : (
+            <p>Waiting...</p>
+          )}
+        </div>
       </div>
 
-      <h1>🧠 Memory Game Arena</h1>
-
-      <div className="player">
-        {opponent && (
-  <img
-    className="avatar"
-    src={opponent.avatar}
-    alt={opponent.name}
-    width={60}
-    style={{ borderRadius: '50%' }}
-  />
-)}
-
-        <p>{opponent?.name}</p>
-      </div>
+      <MemoryBoard />
     </div>
   );
 }
