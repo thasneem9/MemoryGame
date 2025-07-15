@@ -7,7 +7,32 @@ export default function PlayerSetup() {
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const navigate = useNavigate();
 
+ const avatarList = [
+  // Pixel-art characters
+  { seed: 'Mario', style: 'pixel-art' },
+  { seed: 'Link', style: 'pixel-art' },
+  { seed: 'Luigi', style: 'pixel-art' },
+
+  // Adventurer (D&D style fantasy faces)
+  { seed: 'Archer', style: 'adventurer' },
+  { seed: 'Mage', style: 'adventurer' },
+
+  // Big-ears animal style
+  { seed: 'Foxie', style: 'big-ears' },
+  { seed: 'Bunny', style: 'big-ears' },
+
+  // Bottts – robot faces
+  { seed: 'BotX', style: 'bottts' },
+  { seed: 'Cyborg', style: 'bottts' },
+
+  // Funny emoji-style
+  { seed: 'LOLFace', style: 'fun-emoji' },
+];
+
+
+
   const handleSubmit = () => {
+    
     const id = uuid(); // ✅ generate unique per player
     const user = { id, name, avatar: selectedAvatar };
     console.log('🔵 Sending user:', user);
@@ -28,16 +53,21 @@ export default function PlayerSetup() {
 
       <h3>Select your avatar:</h3>
       <div className="avatar-options">
-        {['🐸', '🦄', '👽'].map((icon) => (
-          <button
-            key={icon}
-            className={selectedAvatar === icon ? 'selected' : ''}
-            onClick={() => setSelectedAvatar(icon)}
-          >
-            {icon}
-          </button>
-        ))}
-      </div>
+  {avatarList.map(({ seed, style }) => {
+    const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+    return (
+      <button
+        key={seed}
+        className={selectedAvatar === avatarUrl ? 'selected' : ''}
+        onClick={() => setSelectedAvatar(avatarUrl)}
+        title={seed} // Tooltip
+      >
+        <img src={avatarUrl} alt={seed} className="avatar-img" />
+      </button>
+    );
+  })}
+</div>
+
 
       <button
         className="start-btn"

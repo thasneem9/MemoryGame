@@ -7,14 +7,24 @@ export default function Play() {
   return (
     <div className="play-screen">
       <div className="player">
-        <div className="avatar">{user?.avatar}</div>
+      <img  className='avatar'src={user.avatar} alt={user.name} width={60} style={{ borderRadius: '50%' }} />
+
         <p>{user?.name}</p>
       </div>
 
       <h1>🧠 Memory Game Arena</h1>
 
       <div className="player">
-        <div className="avatar">{opponent?.avatar}</div>
+        {opponent && (
+  <img
+    className="avatar"
+    src={opponent.avatar}
+    alt={opponent.name}
+    width={60}
+    style={{ borderRadius: '50%' }}
+  />
+)}
+
         <p>{opponent?.name}</p>
       </div>
     </div>

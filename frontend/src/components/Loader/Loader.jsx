@@ -37,7 +37,7 @@ export default function Loader() {
     socket.on('matchFound', (opponent) => {
       console.log('🟡 Received matchFound with:', opponent);
       clearTimeout(timeout);
-      toast.success(`✅ Player Found: ${opponent.name} ${opponent.avatar}`);
+      toast.success(`✅ Player Found: ${opponent.name} `);
       navigate('/play', { state: { user, opponent } });
     });
 
