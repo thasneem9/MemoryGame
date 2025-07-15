@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-
+import './playersetup.css'
 export default function PlayerSetup() {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(null);
