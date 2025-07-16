@@ -70,6 +70,19 @@ socket.on('opponentFlipCard', (cardId) => {
   socket.onAny((event, ...args) => {
   console.log(`📡 Received event: ${event}`, args);
 });
+socket.on('unmatchCards', ({ ids }) => {
+  console.log('❌ Unmatched cards, flipping back:', ids);
+  setTimeout(() => {
+    setCards(prev =>
+      prev.map(card =>
+        ids.includes(card.id)
+          ? { ...card, flipped: false }
+          : card
+      )
+    );
+  }, 1000); // Delay to allow flip animation to play before flipping back
+});
+
 
   // 🔁 Only 1 player creates board AFTER listeners are ready
   if (user.socketId < opponent.socketId) {
@@ -88,6 +101,7 @@ socket.on('opponentFlipCard', (cardId) => {
     socket.off('boardInit');
     socket.off('opponentFlipCard');
     socket.off('cardsMatched');
+      socket.off('unmatchCards'); // ✅ cleanup
   };
 }, [user,opponent]);
 
@@ -109,18 +123,32 @@ console.log('🕳️ Emitting flipCard to room:', roomId);
     const newFlipped = [...flipped, id];
     setFlipped(newFlipped);
 
-    if (newFlipped.length === 2) {
-      const [a, b] = newFlipped;
-      const cardA = cards.find((c) => c.id === a);
-      const cardB = cards.find((c) => c.id === b);
+  if (newFlipped.length === 2) {
+  const [a, b] = newFlipped;
+  const cardA = cards.find((c) => c.id === a);
+  const cardB = cards.find((c) => c.id === b);
 
-      if (cardA.value === cardB.value) {
-       socket.emit('matchCards', { ids: [a, b], roomId, player: user.name });
+ if (cardA.value === cardB.value) {
+  socket.emit('matchCards', { ids: [a, b], roomId, player: user.name });
+} else {
+  // Flip them back locally
+  setTimeout(() => {
+    setCards(prev =>
+      prev.map(card =>
+        card.id === a || card.id === b
+          ? { ...card, flipped: false }
+          : card
+      )
+    );
+  }, 1000);
 
-      }
+  // ⬇️ Emit to other player to flip back too
+  socket.emit('unmatchCards', { ids: [a, b], roomId });
+}
 
-      setTimeout(() => setFlipped([]), 1000);
-    }
+  setTimeout(() => setFlipped([]), 1000); // reset local tracking
+}
+
 
     console.log(`🌀 Emitting flipCard for ID ${id} to room:`, roomId);
 
@@ -131,15 +159,16 @@ console.log('🕳️ Emitting flipCard to room:', roomId);
       <div className="memory-board">
         {cards.map((card) => (
           <div
-            key={card.id}
-            className={`card ${card.flipped || card.matched ? 'flipped' : ''}`}
-            onClick={() => !card.flipped && !card.matched && handleFlip(card.id)}
-          >
-            <div className="flip-inner">
-              <div className="flip-front"></div>
-              <div className="flip-back">{card.value}</div>
-            </div>
-          </div>
+  key={card.id}
+  className={`card ${card.flipped ? 'flipped' : ''} ${card.matched ? 'matched' : ''}`}
+  onClick={() => !card.flipped && !card.matched && handleFlip(card.id)}
+>
+  <div className="flip-inner">
+    <div className="flip-front"></div>
+    <div className="flip-back">{card.value}</div>
+  </div>
+</div>
+
         ))}
       </div>
 

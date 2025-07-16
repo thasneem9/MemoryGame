@@ -66,6 +66,10 @@ socket.on('flipCard', ({ cardId, roomId }) => {
   socket.on('matchCards', ({ ids, roomId, player }) => {
     io.to(roomId).emit('cardsMatched', { ids, player });
   });
+socket.on('unmatchCards', ({ ids, roomId }) => {
+  console.log('❌ Received unmatchCards for room', roomId, 'ids:', ids);
+  socket.to(roomId).emit('unmatchCards', { ids });
+});
 
   socket.on('disconnect', () => {
     if (waitingUser?.socketId === socket.id) {

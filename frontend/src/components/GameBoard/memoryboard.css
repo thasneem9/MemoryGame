@@ -55,3 +55,9 @@
   font-weight: bold;
   color: #fff;
 }
+.card.matched {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
