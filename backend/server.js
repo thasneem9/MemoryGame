@@ -61,6 +61,9 @@ socket.on('flipCard', ({ cardId, roomId }) => {
   console.log(`📦 Room ${roomId} has sockets:`, socketsInRoom ? [...socketsInRoom] : 'Not found');
   socket.to(roomId).emit('opponentFlipCard', cardId);
 });
+socket.on('switchTurn', ({ roomId, turn }) => {
+  io.to(roomId).emit('switchTurn', { turn }); // ✅ emit to both players
+});
 
   // Match found event
   socket.on('matchCards', ({ ids, roomId, player }) => {

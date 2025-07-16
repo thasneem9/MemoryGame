@@ -22,6 +22,8 @@ export default function MemoryBoard({ user, opponent }) {
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [scores, setScores] = useState({ [user.name]: 0, [opponent.name]: 0 });
+  const [currentTurn, setCurrentTurn] = useState(null); // first turn by user
+
   if (!user?.socketId || !opponent?.socketId || !opponent?.roomId) {
   return <p style={{ color: 'white' }}>⛔ Waiting for full player info...</p>;
 }
@@ -82,6 +84,11 @@ socket.on('unmatchCards', ({ ids }) => {
     );
   }, 1000); // Delay to allow flip animation to play before flipping back
 });
+socket.on('switchTurn', (data) => {
+  console.log('🔄 Switching turn to:', data.turn);
+  setCurrentTurn(data.turn);  // ✅ Now it works
+});
+
 
 
   // 🔁 Only 1 player creates board AFTER listeners are ready
@@ -95,6 +102,7 @@ socket.on('unmatchCards', ({ ids }) => {
     setCards(board);
     console.log('🧠 Generating + sending board to room:', user.roomId);
     socket.emit('initBoard', { board, roomId: user.roomId });
+    socket.emit('switchTurn', { roomId, turn: user.socketId }); 
   }
 
   return () => {
@@ -112,50 +120,53 @@ socket.on('unmatchCards', ({ ids }) => {
     );
   };
 
-  const handleFlip = (id) => {
-    flipCardLocally(id);
-socket.emit('flipCard', { cardId: id, roomId });
-console.log(`🌀 ${user.name} clicked card ID ${id}`);
-console.log('🕳️ Emitting flipCard to room:', roomId);
+const handleFlip = (id) => {
+  if (currentTurn !== user.socketId) return; // Not your turn
 
+  flipCardLocally(id);
+  socket.emit('flipCard', { cardId: id, roomId });
+  console.log(`🌀 ${user.name} clicked card ID ${id}`);
 
-
-    const newFlipped = [...flipped, id];
-    setFlipped(newFlipped);
+  const newFlipped = [...flipped, id];
+  setFlipped(newFlipped);
 
   if (newFlipped.length === 2) {
-  const [a, b] = newFlipped;
-  const cardA = cards.find((c) => c.id === a);
-  const cardB = cards.find((c) => c.id === b);
+    const [a, b] = newFlipped;
+    const cardA = cards.find((c) => c.id === a);
+    const cardB = cards.find((c) => c.id === b);
 
- if (cardA.value === cardB.value) {
-  socket.emit('matchCards', { ids: [a, b], roomId, player: user.name });
-} else {
-  // Flip them back locally
-  setTimeout(() => {
-    setCards(prev =>
-      prev.map(card =>
-        card.id === a || card.id === b
-          ? { ...card, flipped: false }
-          : card
-      )
-    );
-  }, 1000);
+    if (cardA.value === cardB.value) {
+      socket.emit('matchCards', { ids: [a, b], roomId, player: user.name });
+      // stay on same turn
+    } else {
+      socket.emit('unmatchCards', { ids: [a, b], roomId });
+      setTimeout(() => {
+        setCards(prev =>
+          prev.map(card =>
+            card.id === a || card.id === b ? { ...card, flipped: false } : card
+          )
+        );
+        setCurrentTurn(opponent.socketId); // switch turn after mismatch
+        socket.emit('switchTurn', { roomId, turn: opponent.socketId });
+      }, 1000);
+    }
 
-  // ⬇️ Emit to other player to flip back too
-  socket.emit('unmatchCards', { ids: [a, b], roomId });
-}
+    setTimeout(() => setFlipped([]), 1000);
+  }
+};
 
-  setTimeout(() => setFlipped([]), 1000); // reset local tracking
-}
-
-
-    console.log(`🌀 Emitting flipCard for ID ${id} to room:`, roomId);
-
-  };
 
   return (
     <div>
+      <p style={{ color: '#fff', textAlign: 'center' }}>
+  {currentTurn === null
+    ? '⏳ Waiting for first turn...'
+    : currentTurn === user.socketId
+      ? "🎯 Your turn"
+      : `🎯 ${opponent.name}'s turn...`}
+</p>
+
+
       <div className="memory-board">
         {cards.map((card) => (
           <div
@@ -172,10 +183,17 @@ console.log('🕳️ Emitting flipCard to room:', roomId);
         ))}
       </div>
 
-      <div className="scoreboard">
-        <p>{user.name}: {scores[user.name]}</p>
-        <p>{opponent.name}: {scores[opponent.name]}</p>
-      </div>
+     <div className="scoreboard">
+  <div className={`player-block ${currentTurn === user.socketId ? 'active-turn' : ''}`}>
+    <img src={user.avatar} alt={user.name} width="40" height="40" />
+    <p>{user.name}: {scores[user.name]}</p>
+  </div>
+  <div className={`player-block ${currentTurn === opponent.socketId ? 'active-turn' : ''}`}>
+    <img src={opponent.avatar} alt={opponent.name} width="40" height="40" />
+    <p>{opponent.name}: {scores[opponent.name]}</p>
+  </div>
+</div>
+
     </div>
   );
 }

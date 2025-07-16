@@ -61,3 +61,19 @@
   opacity: 0;
   transition: opacity 0.3s ease-out;
 }
+
+.player-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.player-block.active-turn {
+  border: 2px solid #00ffcc;
+  box-shadow: 0 0 10px #00ffcc90;
+  background-color: #ffffff10;
+}
+
