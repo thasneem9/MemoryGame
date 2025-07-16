@@ -28,7 +28,9 @@ export default function Play() {
         </div>
       </div>
 
-      <MemoryBoard />
+     {opponent && <MemoryBoard user={user} opponent={opponent} />}
+
+
     </div>
   );
 }

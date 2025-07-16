@@ -30,16 +30,34 @@ export default function Loader() {
 
     const timeout = setTimeout(() => {
       toast.info('❌ No online users found. Starting single player...');
-      navigate('/play', { state: { user, opponent: null } });
+     navigate('/play', {
+  state: {
+    user: { ...user, socketId: socket.id },
+    opponent
+  }
+});
+
     }, 10000);
 
     // ✅ Set listener first
-    socket.on('matchFound', (opponent) => {
-      console.log('🟡 Received matchFound with:', opponent);
-      clearTimeout(timeout);
-      toast.success(`✅ Player Found: ${opponent.name} `);
-      navigate('/play', { state: { user, opponent } });
-    });
+socket.on('matchFound', (opponent) => {
+  console.log('🟡 Received matchFound with:', opponent);
+  clearTimeout(timeout);
+
+  const roomId = opponent.roomId; // ✅ from the one who receives `matchFound`
+  const fullUser = { ...user, socketId: socket.id, roomId };
+  const fullOpponent = { ...opponent };
+
+  toast.success(`✅ Player Found: ${opponent.name}`);
+  navigate('/play', {
+    state: {
+      user: fullUser,
+      opponent: fullOpponent
+    }
+  });
+});
+
+
 
     // ✅ THEN emit
     hasEmittedRef.current = true;

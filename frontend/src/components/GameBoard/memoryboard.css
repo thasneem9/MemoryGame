@@ -47,3 +47,11 @@
   color: black;
   transform: rotateY(180deg);
 }
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #fff;
+}

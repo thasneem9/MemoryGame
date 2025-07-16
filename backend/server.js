@@ -20,42 +20,61 @@ let waitingUser = null;
 io.on('connection', (socket) => {
   console.log('🟢 New socket connected:', socket.id);
 
- socket.on('findMatch', (user) => {
-  console.log('📩 Received findMatch from:', user, 'Socket ID:', socket.id);
-
+  socket.on('findMatch', (user) => {
   if (waitingUser) {
     const opponent = waitingUser;
     waitingUser = null;
 
-    console.log(`✅ Matching ${user.name} (${socket.id}) with ${opponent.name} (${opponent.socketId})`);
+    const roomId = `room-${opponent.socketId}-${socket.id}`;
 
-io.to(opponent.socketId).emit('matchFound', { ...user, socketId: socket.id });
-console.log(`📤 Emitted matchFound to opponent (${opponent.socketId})`);
+    // ✅ Join BOTH sockets to room
+    socket.join(roomId);
+    io.sockets.sockets.get(opponent.socketId)?.join(roomId); // ✅ fix!
 
-io.to(socket.id).emit('matchFound', { ...opponent });
-console.log(`📤 Emitted matchFound to user (${socket.id})`);
+    io.to(opponent.socketId).emit('matchFound', {
+      ...user,
+      socketId: socket.id,
+      roomId,
+    });
 
+    io.to(socket.id).emit('matchFound', {
+      ...opponent,
+      roomId,
+    });
 
+    console.log(`🎮 Created room ${roomId} for ${opponent.socketId} & ${socket.id}`);
   } else {
     waitingUser = { ...user, socketId: socket.id };
-    console.log(`⏳ No opponent yet. Waiting user set: ${user.name} (${socket.id})`);
   }
 });
-socket.on('connect', () => {
-  console.log('🧷 Connected to socket:', socket.id);
+
+
+  // Listen for initial board (only 1 player should send it)
+  socket.on('initBoard', ({ board, roomId }) => {
+    socket.to(roomId).emit('boardInit', board);
+  });
+
+  // Flip card event
+socket.on('flipCard', ({ cardId, roomId }) => {
+  console.log(`🟠 flipCard received from ${socket.id} for card ${cardId} in ${roomId}`);
+  const socketsInRoom = io.sockets.adapter.rooms.get(roomId);
+  console.log(`📦 Room ${roomId} has sockets:`, socketsInRoom ? [...socketsInRoom] : 'Not found');
+  socket.to(roomId).emit('opponentFlipCard', cardId);
 });
 
-
+  // Match found event
+  socket.on('matchCards', ({ ids, roomId, player }) => {
+    io.to(roomId).emit('cardsMatched', { ids, player });
+  });
 
   socket.on('disconnect', () => {
     if (waitingUser?.socketId === socket.id) {
-      console.log(`❌ Disconnected while waiting: ${waitingUser.name}`);
       waitingUser = null;
-    } else {
-      console.log('🔌 Socket disconnected:', socket.id);
     }
   });
 });
+
+
 
 server.listen(5000, () => {
   console.log('🚀 Server running on port 5000');
