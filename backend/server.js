@@ -17,6 +17,16 @@ const io = new Server(server, {
     origin: '*',
   },
 });
+const path = require('path');
+
+// Serve frontend static files from React build (Vite’s dist folder)
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// For any other route, serve index.html so React router works
+app.get(/^(?!\/api\/).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
 
 let waitingUser = null;
 
